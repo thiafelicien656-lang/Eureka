@@ -18,36 +18,36 @@ const path = "/"
 
 //LVD
 function redirigerVersDetails() {
-      const urlCible = "https://lively-coast-088a84303-1.westeurope.6.azurestaticapps.net/?show=details";
-      window.open(urlCible, '_blank');
+    const urlCible = "https://lively-coast-088a84303-1.westeurope.6.azurestaticapps.net/?show=details";
+    window.open(urlCible, '_blank');
 }
 
 //Aloalo
 function aloalo() {
-      const urlCible = "https://polite-pebble-0726f9c03-1.westeurope.6.azurestaticapps.net/#formations";
-      window.open(urlCible, '_blank');
+    const urlCible = "https://polite-pebble-0726f9c03-1.westeurope.6.azurestaticapps.net/#formations";
+    window.open(urlCible, '_blank');
 }
 
-//Aloma
+//Aloma competences
 function aloma() {
-      const urlCible = "https://polite-sky-00c4ddd03-1.westeurope.6.azurestaticapps.net/#offres";
-      window.open(urlCible, '_blank');
+    const urlCible = "https://polite-sky-00c4ddd03-1.westeurope.6.azurestaticapps.net/#offres";
+    window.open(urlCible, '_blank');
 }
 
 //Eureka
 function Eureka() {
-      const urlCible = "https://thankful-smoke-064996a10-1.centralus.3.azurestaticapps.net/#offres";
-      window.open(urlCible, '_blank');
+    const urlCible = "https://thankful-smoke-064996a10-1.centralus.3.azurestaticapps.net/#offres";
+    window.open(urlCible, '_blank');
 }
 //allomavony    showdetails here
 function allomavony() {
-      const urlCible = "https://www.alomalavounicompetences.fr/?show=details";
-      window.open(urlCible, '_blank');
+    const urlCible = "https://www.alomalavounicompetences.fr/?show=details";
+    window.open(urlCible, '_blank');
 }
 //alomaytri
 function alomaytri() {
-      const urlCible = "https://alomaycode.github.io/alomaytri-front/?show=details";
-      window.open(urlCible, '_blank');
+    const urlCible = "https://alomaycode.github.io/alomaytri-front/?show=details";
+    window.open(urlCible, '_blank');
 }
 
 
@@ -77,10 +77,10 @@ var grandImage = document.getElementById("grandImage");
 
 
 
-function actuHtml(titre, Contenu, describe, id) {
-      const baseUrl = `http://localhost:5012/api/actualites/image/${id}`;
+function actuHtml(titre, Contenu, describe, id, titre, descriptionSite) {
+    const baseUrl = `https://eureka-api-ehbed6ggg2d4c7gv.spaincentral-01.azurewebsites.net/api/actualites/image/${id}`;
 
-      return `
+    return `
             <div class="news-section">
       <div class="hero-container" id="heroContainer">
             <img src="${baseUrl}" alt="Actualités Mayotte" class="hero-image">
@@ -99,9 +99,9 @@ function actuHtml(titre, Contenu, describe, id) {
                               <div class="ActuDiv  ">
                                     <img src="${img0}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre Alomay</h2>
+                                          <h2 class="actu-title-link">${titre['ALOMAYJOB']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            ${descriptionSite['ALOMAYJOB']}
                                           </p>
                                     </div>
                               </div>
@@ -111,9 +111,9 @@ function actuHtml(titre, Contenu, describe, id) {
                               <div class="ActuDiv special" onclick="redirigerVersDetails()">
                                     <img src="${img1}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre1</h2>
+                                          <h2 class="actu-title-link">${titre['LVD']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                ${descriptionSite['LVD']}
                                           </p>
                                     </div>
                               </div>
@@ -121,9 +121,9 @@ function actuHtml(titre, Contenu, describe, id) {
                               <div class="ActuDiv special" onclick="aloalo()">
                                     <img src="${img2}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre2</h2>
+                                          <h2 class="actu-title-link">${titre['ALOALO']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                ${descriptionSite['ALOALO']}
                                           </p>
                                     </div>
                               </div>
@@ -131,9 +131,9 @@ function actuHtml(titre, Contenu, describe, id) {
                               <div class="ActuDiv special" onclick="Eureka()">
                                     <img src="${img3}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre3</h2>
+                                          <h2 class="actu-title-link">${titre['EUREKA']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                ${descriptionSite['EUREKA']}
                                           </p>
                                     </div>
                               </div>
@@ -141,29 +141,29 @@ function actuHtml(titre, Contenu, describe, id) {
                               <div class="ActuDiv special" onclick="aloma()">
                                     <img src="${img4}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre4</h2>
+                                          <h2 class="actu-title-link">${titre['ALOMAYJOB COMPETENCES']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                ${descriptionSite['ALOMAYJOB COMPETENCES']}
                                           </p>
                                     </div>
                               </div>
 
-                              <div class="ActuDiv special">
+                              <div class="ActuDiv special" onclick="alomaytri()">
                                     <img src="${img5}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre5</h2>
+                                          <h2 class="actu-title-link">${titre['ALOMAYTRI']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                ${descriptionSite['ALOMAYTRI']}
                                           </p>
                                     </div>
                               </div>
 
-                              <div class="ActuDiv special">
+                              <div class="ActuDiv special" onclick="allomavony()">
                                     <img src="${img6}" alt="actu" class="actu-flag-img">
                                     <div class="actu-body">
-                                          <h2 class="actu-title-link">Titre6</h2>
+                                          <h2 class="actu-title-link">${titre['ALOMALAVOUNI']}</h2>
                                           <p class="actu-text-short">
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            ${descriptionSite['ALOMALAVOUNI']}
                                           </p>
                                     </div>
                               </div>
@@ -223,36 +223,72 @@ function actuHtml(titre, Contenu, describe, id) {
 
 
 async function chargerDerniereActualite(categorie) {
-      try {
+    try {
 
-            const response = await fetch(`http://localhost:5012/api/actualites/last?cat=${categorie}`);
+        const response = await fetch(`https://eureka-api-ehbed6ggg2d4c7gv.spaincentral-01.azurewebsites.net/api/actualites/last?cat=${categorie}`);
 
-            if (!response.ok) {
-                  console.log("Aucune actualité trouvée");
-                  return;
+
+        if (!response.ok) {
+            console.log("Aucune actualité trouvée");
+            return;
+        }
+
+        const responsTitre = await fetch("https://eureka-api-ehbed6ggg2d4c7gv.spaincentral-01.azurewebsites.net/api/actualites/last-titles-by-category");
+        const actuTitle = await responsTitre.json();
+
+
+        let titreSite = {
+            'LVD': 'Aucun titre',
+            'ALOALO': 'Aucun titre',
+            'ALOMAYJOB COMPETENCES': 'Aucun titre',
+            'EUREKA': 'Aucun titre',
+            'ALOMALAVOUNI': 'Aucun titre',
+            'ALOMAYTRI': 'Aucun titre',
+            'ALOMAYJOB': 'Aucun titre'
+        };
+
+        let descSite = {
+            'LVD': 'Aucune description',
+            'ALOALO': 'Aucune description',
+            'ALOMAYJOB COMPETENCES': 'Aucune description',
+            'ALOMAYJOB': 'Aucune description',
+            'EUREKA': 'Aucune description',
+            'ALOMALAVOUNI': 'Aucune description',
+            'ALOMAYTRI': 'Aucune description'
+        };
+
+        actuData.forEach(item => {
+            if (titreSite.hasOwnProperty(item.categorie) && item.derniereActu) {
+                titreSite[item.categorie] = item.derniereActu.titre;
+                descSite[item.categorie] = item.derniereActu.descriptionCourte;
             }
+        })
 
-            const actu = await response.json();
-            console.log("Actualité récupérée :", actu.id);
-
-
-            const htmlFinal = actuHtml(actu.titre, actu.contenu, actu.description, actu.id);
+        console.log("Titres mis à jour :", titreSite);
 
 
-            actualite.insertAdjacentHTML('beforeend', htmlFinal);
-            new NewsShowcase();
+
+        const actu = await response.json();
+        console.log("Actualité récupérée :", actu.id);
 
 
-      } catch (error) {
-            console.error("Erreur lors de la récupération :", error);
-      }
+        const htmlFinal = actuHtml(actu.titre, actu.contenu, actu.description, actu.id, titreSite, descSite);
+
+
+        actualite.insertAdjacentHTML('beforeend', htmlFinal);
+        new NewsShowcase();
+
+
+    } catch (error) {
+        console.error("Erreur lors de la récupération :", error);
+    }
 }
 
 
 
 async function init() {
-      console.log("Chargement ddata");
-      await chargerDerniereActualite("ALOMAYJOB");
+    console.log("Chargement ddata");
+    await chargerDerniereActualite("ALOMAYJOB");
 
 }
 

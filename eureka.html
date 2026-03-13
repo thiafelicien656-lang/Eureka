@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EUREKA Mayotte - Tableau de Bord</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0e4b9b',
+            'card-blue': '#eff6ff',
+            'card-yellow': '#fffbeb',
+            'card-green': '#ecfdf5',
+          },
+          borderRadius: {
+            'card': '32px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-slide-in {
+      animation: slideInUp 0.3s ease-out;
+    }
+
+    .icon-wrapper {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .job-card {
+      transition: all 0.3s ease;
+    }
+
+    .job-card:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Toast/notification styles */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+      animation: slideInUp 0.3s ease-out;
+      z-index: 50;
+      font-weight: 600;
+      font-size: 14px;
+      max-width: 300px;
+    }
+
+    .toast-error {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    }
+
+    /* TABS RESPONSIVE */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .tab-button {
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      color: #94a3b8;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+      position: relative;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-button:hover {
+      color: #475569;
+    }
+
+    .tab-button.active {
+      color: #0e4b9b;
+      border-bottom-color: #0e4b9b;
+    }
+
+    .tabs-container {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* Show tabs only on screens smaller than lg (1024px) */
+    @media (max-width: 1023px) {
+      .tabs-container {
+        display: flex;
+        margin-bottom: 24px;
+      }
+
+      .tabs-container > div:first-child {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .tabs-container .tab-button span {
+        display: none;
+      }
+
+      .tab-button {
+        padding: 12px 12px;
+        min-width: auto;
+      }
+
+      .dashboard-grid {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #column-history,
+      #column-profile,
+      #column-suggestions {
+        display: none !important;
+      }
+
+      .tab-content #column-history,
+      .tab-content #column-profile,
+      .tab-content #column-suggestions {
+        display: flex !important;
+        width: 100%;
+      }
+
+      .tab-content.active {
+        display: flex;
+      }
+    }
+
+    /* Show button text on md and larger */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .tab-button span {
+        display: inline !important;
+      }
+
+      .tab-button {
+        padding: 12px 16px;
+      }
+    }
+
+    /* Ensure desktop mode displays grid correctly */
+    @media (min-width: 1024px) {
+      .tabs-container {
+        display: none !important;
+      }
+
+      .dashboard-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+
+      .tab-content {
+        display: contents;
+      }
+
+      #column-history,
+      #column-profile,
+      #column-suggestions {
+        display: flex !important;
+      }
+    }
+  </style>
+</head>
+
+
+<body class="min-h-screen text-slate-900 overflow-x-hidden">
+
+  <div class="container mx-auto px-4 py-12 md:py-16 max-w-[1440px]">
+    
+    <!-- HEADER -->
+    <header class="mb-12 text-center lg:text-left animate-slide-in">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+        <div>
+          <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-primary tracking-tighter mb-3 uppercase leading-none">
+            EUREKA <span class="text-blue-600 font-black">MAYOTTE</span>
+          </h1>
+          <p class="text-sm md:text-base text-slate-500 font-medium max-w-2xl">
+            Votre tableau de bord professionnel intelligent. Gérez vos candidatures, affinez votre profil et saisissez les meilleures opportunités du lagon.
+          </p>
+        </div>
+        <div class="hidden lg:block">
+          <div class="bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-2.5">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Connecté en direct</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- RESPONSIVE TABS (visible on lg: screens only) -->
+    <div class="tabs-container border-b border-slate-200 mb-8">
+      <div class="flex overflow-x-auto">
+        <button class="tab-button active" onclick="switchTab('history')">
+          <div class="flex items-center gap-2">
+            <i data-lucide="history" size="18"></i>
+            <span>Historique</span>
+          </div>
+        </button>
+        <button class="tab-button" onclick="switchTab('profile')">
+          <div class="flex items-center gap-2">
+            <i data-lucide="user" size="18"></i>
+            <span>Profil</span>
+          </div>
+        </button>
+        <button class="tab-button" onclick="switchTab('suggestions')">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" size="18"></i>
+            <span>Suggestions</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN DASHBOARD GRID -->
+    <div class="dashboard-grid grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 items-stretch">
+      
+      <!-- COLUMN 1: JOB HISTORY -->
+      <div class="tab-content active" id="tab-history">
+        <div id="column-history" class="bg-white rounded-card p-6 lg:p-7 border border-slate-100 shadow-xl shadow-slate-200/20 h-full flex flex-col group hover:border-blue-200/50 transition-all duration-300 animate-slide-in" style="animation-delay: 0.1s;">
+        <div class="mb-8 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 icon-wrapper">
+              <i data-lucide="history" size="24"></i>
+            </div>
+            <div>
+              <h2 class="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight leading-none">Historique</h2>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Candidatures</p>
+            </div>
+          </div>
+          <div class="bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-100 flex items-center gap-2">
+            <span id="jobs-count" class="text-[9px] font-black text-slate-400 uppercase tracking-wider">0 Postes</span>
+          </div>
+        </div>
+        
+        <div id="jobs-list" class="space-y-4 flex-grow overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
+          <!-- Rendered by JavaScript -->
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-slate-100">
+          <div class="flex items-center justify-between mb-2.5">
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Taux de réponse</p>
+            <span class="text-[11px] font-black text-blue-600">75%</span>
+          </div>
+          <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+            <div class="h-full bg-gradient-to-r from-blue-600 to-blue-500 w-[75%] rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: USER PROFILE -->
+      <div class="tab-content" id="tab-profile">
+        <div id="column-profile" class="bg-white rounded-card p-6 lg:p-7 border border-slate-100 shadow-xl shadow-slate-200/20 h-full flex flex-col group hover:border-amber-200/50 transition-all duration-300 animate-slide-in" style="animation-delay: 0.2s;">
+        <div class="flex items-center justify-between mb-8">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-inner group-hover:bg-amber-600 group-hover:text-white transition-all duration-300 icon-wrapper">
+              <i data-lucide="user" size="24"></i>
+            </div>
+            <div>
+              <h2 class="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight leading-none">Profil</h2>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Candidat</p>
+            </div>
+          </div>
+          <button id="btn-edit-profile" class="w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md active:scale-90 border bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100" title="Éditer le profil">
+            <i data-lucide="edit-2" size="18"></i>
+          </button>
+        </div>
+
+        <div id="profile-container" class="space-y-6 flex-grow overflow-y-auto custom-scrollbar pr-2">
+          <!-- Rendered by JavaScript -->
+        </div>
+
+        <div id="profile-footer" class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-3">
+          <button class="h-10 px-4 rounded-xl border-2 border-slate-100 text-slate-400 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center gap-2 group" title="Partager sur LinkedIn">
+            <i data-lucide="linkedin" size="18" class="group-hover:scale-110 transition-transform"></i>
+            <span class="text-[9px] font-black uppercase tracking-widest hidden sm:inline">LinkedIn</span>
+          </button>
+          <div class="h-10 w-[1px] bg-slate-100"></div>
+          <div class="flex flex-col text-center">
+            <span class="text-[8px] font-black text-slate-300 uppercase leading-none mb-0.5">Dernière MaJ</span>
+            <span class="text-[10px] font-bold text-slate-500 tracking-tight">Aujourd'hui</span>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: SUGGESTIONS -->
+      <div class="tab-content" id="tab-suggestions">
+        <div id="column-suggestions" class="bg-white rounded-card p-6 lg:p-7 border border-slate-100 shadow-xl shadow-slate-200/20 h-full flex flex-col group hover:border-emerald-200/50 transition-all duration-300 animate-slide-in" style="animation-delay: 0.3s;">
+        <div class="mb-8 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 icon-wrapper">
+              <i data-lucide="sparkles" size="24"></i>
+            </div>
+            <div>
+              <h2 class="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight leading-none">Suggestions</h2>
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Opportunités</p>
+            </div>
+          </div>
+          <div class="bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 flex items-center gap-2">
+            <span class="text-[9px] font-black text-emerald-600 uppercase tracking-wider animate-pulse">Nouveau</span>
+          </div>
+        </div>
+
+        <div id="suggestions-list" class="space-y-4 flex-grow overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
+          <!-- Rendered by JavaScript -->
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-slate-100">
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[28px] p-6 text-white shadow-2xl shadow-slate-900/40 relative overflow-hidden group/cta">
+            <div class="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl group-hover/cta:scale-110 transition-transform duration-300"></div>
+            <div class="relative z-10 flex flex-col gap-4">
+              <div>
+                <h4 class="text-lg font-extrabold tracking-tighter mb-1 uppercase">Besoin d'aide ?</h4>
+                <p class="text-[10px] text-slate-400 font-bold mb-0">Un conseiller Eureka vous accompagne.</p>
+              </div>
+              <button onclick="handleBookConsultation()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-[10px] tracking-widest rounded-xl h-10 border-none shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <i data-lucide="calendar" size="14"></i>
+                <span>Réserver</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-16 lg:mt-20 py-12 border-t border-slate-200">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+        <div class="space-y-2">
+          <div class="text-primary font-black text-xl flex items-center justify-center md:justify-start gap-2">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white text-sm font-bold">E</div>
+            EUREKA MAYOTTE
+          </div>
+          <p class="text-sm text-slate-400 font-medium">© 2024 EUREKA. Tous droits réservés sur le lagon.</p>
+        </div>
+        <div class="flex gap-6 lg:gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest flex-wrap justify-center md:justify-end">
+          <a href="#" class="hover:text-primary transition-colors hover:underline">Mentions Légales</a>
+          <a href="#" class="hover:text-primary transition-colors hover:underline">Confidentialité</a>
+          <a href="#" class="hover:text-primary transition-colors hover:underline">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // ==================
+    // STATE MANAGEMENT
+    // ==================
+    
+    let appliedJobs = [
+      { id: 1, title: "Développeur Frontend", company: "Mayotte Tech", date: "02 Mars 2024", status: "En cours" },
+      { id: 2, title: "Agent de Maintenance", company: "EDM", date: "28 Fév 2024", status: "Refusé" },
+      { id: 3, title: "Assistant Administratif", company: "Mairie de Mamoudzou", date: "15 Jan 2024", status: "Accepté" },
+      { id: 4, title: "Chargé de Clientèle", company: "Orange Mayotte", date: "10 Jan 2024", status: "En cours" },
+    ];
+
+    const mockSuggestions = [
+      { id: 1, title: "Développeur Fullstack", company: "Digital Mayotte", location: "Koungou", type: "CDI" },
+      { id: 2, title: "Chef de Projet IT", company: "Eureka Conseils", location: "Mamoudzou", type: "CDD" },
+      { id: 3, title: "Designer UI/UX", company: "Studio Lagon", location: "Petite-Terre", type: "Interim" },
+      { id: 4, title: "Analyste Cyber", company: "Cyber-Island", location: "Mamoudzou", type: "CDI" },
+    ];
+
+    let profile = {
+      name: "Issa Abdou",
+      email: "issa.abdou976@email.com",
+      phone: "06 39 XX XX XX",
+      title: "Développeur Web Junior",
+      bio: "Passionné par les nouvelles technologies et le développement d'applications innovantes à Mayotte. Je cherche une opportunité en CDI.",
+      skills: ["HTML5/CSS3", "JavaScript", "React", "Tailwind CSS", "Git"],
+      location: "Mamoudzou, Mayotte"
+    };
+
+    let isEditing = false;
+
+    // ==================
+    // UTILITY FUNCTIONS
+    // ==================
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${type === 'error' ? 'toast-error' : ''}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function getStatusClass(status) {
+      const classes = {
+        "En cours": "bg-blue-50 text-blue-600 border-blue-100",
+        "Accepté": "bg-emerald-50 text-emerald-600 border-emerald-100",
+        "Refusé": "bg-red-50 text-red-600 border-red-100"
+      };
+      return classes[status] || "bg-slate-50 text-slate-600 border-slate-100";
+    }
+
+    // ==================
+    // RENDER FUNCTIONS
+    // ==================
+
+    function renderHistory() {
+      const list = document.getElementById('jobs-list');
+      const count = document.getElementById('jobs-count');
+      
+      count.textContent = `${appliedJobs.length} ${appliedJobs.length === 1 ? 'Poste' : 'Postes'}`;
+      
+      if (appliedJobs.length === 0) {
+        list.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-64 text-center">
+            <i data-lucide="inbox" size="32" class="text-slate-300 mb-3"></i>
+            <p class="text-sm text-slate-400 font-medium">Aucune candidature pour le moment</p>
+            <p class="text-xs text-slate-300 mt-1">Découvrez des opportunités dans les suggestions !</p>
+          </div>
+        `;
+      } else {
+        list.innerHTML = appliedJobs.map((job, index) => `
+          <div class="bg-slate-50/50 p-4 rounded-[24px] border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 group/card job-card animate-slide-in" style="animation-delay: ${index * 50}ms;">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-extrabold text-slate-800 text-sm group-hover/card:text-blue-600 transition-colors leading-tight flex-1">${escapeHtml(job.title)}</h3>
+              <span class="text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider border whitespace-nowrap ml-2 ${getStatusClass(job.status)}">
+                ${job.status}
+              </span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-1.5">
+              <i data-lucide="building-2" size="11" class="text-slate-300 flex-shrink-0"></i> 
+              <span>${escapeHtml(job.company)}</span>
+            </p>
+            <div class="flex items-center gap-2 text-[9px] font-bold text-slate-300 pt-2 border-t border-slate-100">
+              <i data-lucide="clock" size="9"></i> ${job.date}
+            </div>
+          </div>
+        `).join('');
+      }
+      lucide.createIcons();
+    }
+
+    function renderProfile() {
+      const container = document.getElementById('profile-container');
+      const footer = document.getElementById('profile-footer');
+      const editBtn = document.getElementById('btn-edit-profile');
+
+      if (isEditing) {
+        editBtn.innerHTML = '<i data-lucide="check" size="18"></i>';
+        editBtn.className = "w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md active:scale-90 border bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100";
+        editBtn.title = "Enregistrer";
+        footer.classList.add('hidden');
+        
+        container.innerHTML = `
+          <div class="space-y-5 animate-slide-in">
+            <div class="space-y-4">
+              <div class="space-y-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom complet</label>
+                <input id="edit-name" value="${escapeHtml(profile.name)}" class="w-full h-10 px-4 rounded-xl bg-slate-50 border border-transparent focus:outline-none focus:bg-white focus:border-emerald-200 transition-all text-sm font-medium">
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Titre professionnel</label>
+                <input id="edit-title" value="${escapeHtml(profile.title)}" class="w-full h-10 px-4 rounded-xl bg-slate-50 border border-transparent focus:outline-none focus:bg-white focus:border-emerald-200 transition-all text-sm font-medium">
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Biographie</label>
+                <textarea id="edit-bio" class="w-full rounded-xl bg-slate-50 border border-transparent focus:outline-none focus:bg-white focus:border-emerald-200 transition-all min-h-[100px] text-sm font-medium p-4 resize-none">${escapeHtml(profile.bio)}</textarea>
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Compétences</label>
+              <div class="flex gap-2 flex-col sm:flex-row">
+                <input id="new-skill-input" placeholder="Ex: TypeScript" class="flex-grow h-10 px-4 rounded-xl bg-slate-50 border border-transparent focus:outline-none focus:bg-white focus:border-emerald-200 transition-all text-sm font-medium">
+                <button onclick="handleAddSkill()" class="h-10 w-full sm:w-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white p-0 shadow-lg shadow-emerald-200 flex items-center justify-center cursor-pointer transition-all active:scale-95" title="Ajouter une compétence">
+                  <i data-lucide="plus" size="18"></i>
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                ${profile.skills.map((skill, i) => `
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-full text-[10px] font-black text-emerald-700 border border-emerald-100 hover:border-red-200 transition-all">
+                    ${escapeHtml(skill)}
+                    <button onclick="handleRemoveSkill(${i})" class="text-emerald-300 hover:text-red-500 transition-colors cursor-pointer" title="Supprimer">
+                      <i data-lucide="x" size="10"></i>
+                    </button>
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        editBtn.innerHTML = '<i data-lucide="edit-2" size="18"></i>';
+        editBtn.className = "w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md active:scale-90 border bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100";
+        editBtn.title = "Éditer le profil";
+        footer.classList.remove('hidden');
+
+        container.innerHTML = `
+          <div class="space-y-6 animate-slide-in">
+            <div class="bg-slate-50 p-6 rounded-[24px] border border-slate-100 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+              <h3 class="text-2xl font-extrabold text-slate-900 tracking-tighter leading-none mb-1.5">${escapeHtml(profile.name)}</h3>
+              <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">${escapeHtml(profile.title)}</p>
+              <div class="flex flex-col gap-2.5 text-[10px] font-bold text-slate-500">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="map-pin" size="12" class="text-amber-500 flex-shrink-0"></i> ${escapeHtml(profile.location)}
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="mail" size="12" class="text-amber-500 flex-shrink-0"></i> ${escapeHtml(profile.email)}
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="phone" size="12" class="text-amber-500 flex-shrink-0"></i> ${escapeHtml(profile.phone)}
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Biographie</h4>
+              <p class="text-xs text-slate-600 leading-relaxed font-medium bg-white p-4 rounded-2xl border border-slate-100 shadow-sm italic">
+                "${escapeHtml(profile.bio)}"
+              </p>
+            </div>
+
+            <div class="space-y-2.5">
+              <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Compétences clés</h4>
+              <div class="flex flex-wrap gap-1.5">
+                ${profile.skills.map((skill, i) => `
+                  <span class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-50 rounded-full text-[10px] font-black text-amber-700 border border-transparent shadow-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:border-amber-100 group/skill">
+                    ${escapeHtml(skill)}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function renderSuggestions() {
+      const list = document.getElementById('suggestions-list');
+      list.innerHTML = mockSuggestions.map((job, index) => `
+        <div class="bg-slate-50/50 p-5 rounded-[24px] border border-transparent hover:border-emerald-100 hover:bg-white hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 group/card job-card animate-slide-in" style="animation-delay: ${index * 50}ms;">
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex flex-col gap-1 flex-1">
+              <h3 class="font-extrabold text-slate-800 text-sm leading-tight group-hover/card:text-emerald-600 transition-colors">${escapeHtml(job.title)}</h3>
+              <p class="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="building-2" size="11" class="text-slate-300 flex-shrink-0"></i> ${escapeHtml(job.company)}
+              </p>
+            </div>
+            <span class="text-[8px] font-black tracking-widest px-2 py-0.5 bg-white text-emerald-700 rounded-full uppercase border border-emerald-100 shadow-sm whitespace-nowrap ml-2">
+              ${job.type}
+            </span>
+          </div>
+          
+          <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-4 border-b border-slate-100/50 pb-3">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="map-pin" size="12" class="text-emerald-500 flex-shrink-0"></i> ${escapeHtml(job.location)}
+            </div>
+          </div>
+
+          <button 
+            onclick="handleApply('${escapeHtml(job.title).replace(/'/g, "\\'")}', '${escapeHtml(job.company).replace(/'/g, "\\'")}')"
+            class="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border-none font-black uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all active:scale-95 group-hover/card:scale-[1.02] transform text-[10px] cursor-pointer"
+            title="Envoyer une candidature"
+          >
+            Candidature Rapide
+          </button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    // ==================
+    // EVENT HANDLERS
+    // ==================
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('btn-edit-profile').addEventListener('click', () => {
+      if (isEditing) {
+        const name = document.getElementById('edit-name').value.trim();
+        const title = document.getElementById('edit-title').value.trim();
+        const bio = document.getElementById('edit-bio').value.trim();
+
+        if (!name || !title || !bio) {
+          showToast('Veuillez remplir tous les champs', 'error');
+          return;
+        }
+
+        profile.name = name;
+        profile.title = title;
+        profile.bio = bio;
+        showToast('Profil mis à jour avec succès !');
+      }
+      isEditing = !isEditing;
+      renderProfile();
+    });
+
+    function handleApply(title, company) {
+      const today = new Date();
+      const dateStr = today.toLocaleDateString('fr-FR', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      
+      const newJob = {
+        id: Date.now(),
+        title: title,
+        company: company,
+        date: dateStr,
+        status: "En cours"
+      };
+      
+      appliedJobs.unshift(newJob);
+      renderHistory();
+      showToast(`Candidature envoyée pour "${title}" chez ${company} !`);
+    }
+
+    function handleRemoveSkill(index) {
+      profile.skills.splice(index, 1);
+      renderProfile();
+    }
+
+    function handleAddSkill() {
+      const input = document.getElementById('new-skill-input');
+      const val = input.value.trim();
+      
+      if (!val) {
+        showToast('Veuillez entrer une compétence', 'error');
+        return;
+      }
+
+      if (profile.skills.includes(val)) {
+        showToast('Cette compétence existe déjà', 'error');
+        return;
+      }
+
+      if (profile.skills.length >= 10) {
+        showToast('Maximum 10 compétences', 'error');
+        return;
+      }
+
+      profile.skills.push(val);
+      input.value = '';
+      renderProfile();
+    }
+
+    function handleBookConsultation() {
+      showToast('Réservation d\'une consultation en cours...');
+      setTimeout(() => {
+        showToast('Un conseiller vous contactera bientôt !');
+      }, 1500);
+    }
+
+    // ==================
+    // TAB MANAGEMENT
+    // ==================
+
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // Remove active class from all buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show selected tab
+      const tabId = `tab-${tabName}`;
+      const tab = document.getElementById(tabId);
+      if (tab) {
+        tab.classList.add('active');
+      }
+
+      // Highlight selected button
+      const buttons = document.querySelectorAll('.tab-button');
+      const buttonIndex = {
+        'history': 0,
+        'profile': 1,
+        'suggestions': 2
+      };
+      if (buttonIndex[tabName] !== undefined) {
+        buttons[buttonIndex[tabName]].classList.add('active');
+      }
+
+      // Recreate icons in the new active tab
+      setTimeout(() => {
+        lucide.createIcons();
+      }, 0);
+    }
+
+    // ==================
+    // KEYBOARD SHORTCUTS
+    // ==================
+
+    document.addEventListener('keydown', (e) => {
+      if (isEditing && e.key === 'Enter' && e.ctrlKey) {
+        document.getElementById('btn-edit-profile').click();
+      }
+      if (isEditing && e.key === 'Escape') {
+        isEditing = false;
+        renderProfile();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (isEditing && e.id === 'new-skill-input' && e.key === 'Enter') {
+        handleAddSkill();
+      }
+    });
+
+    // ==================
+    // INITIALIZATION
+    // ==================
+
+    function initializeApp() {
+      renderHistory();
+      renderProfile();
+      renderSuggestions();
+      lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+    // If DOM is already loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+      initializeApp();
+    }
+  </script>
+</body>
+</html>

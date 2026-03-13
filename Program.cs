@@ -12,7 +12,7 @@ using Eureka.Api.Services.Security;
 using Eureka.Api.Services.Storage;
 using Eureka.Domain.Actualites;
 
-using  Eureka.Api.Endpoints;
+// maj
 
 using Eureka.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -222,6 +222,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.app.UseRouting();
 app.UseCors("Front");
 var supportedCultures = new[] { new CultureInfo("fr-FR") };
 

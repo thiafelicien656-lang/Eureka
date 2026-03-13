@@ -1,100 +1,113 @@
+using Microsoft.AspNetCore.Mvc;
 using Eureka.Domain.Actualites;
 using Eureka.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Eureka.Api.Endpoints;
+namespace Eureka.Api.Controllers;
 
-public static class ActualiteEndpoints
+
+
+[ApiController]
+[Route("api/[controller]")]
+public class ActualitesController : ControllerBase
       {
-      public static void MapActualiteEndpoints(this IEndpointRouteBuilder app)
-      {
-            var group = app.MapGroup("/api/actualites");
 
-            group.MapGet("/last-titles-by-category", async (EurekaDbContext db) =>
-{
-    // On regroupe par catégorie, puis on prend le Titre de la plus récente
-    var result = await db.Set<Actualite>()
-        .GroupBy(a => a.Categorie)
-        .Select(g => new 
-        {
-            Categorie = g.Key,
-            DernierTitre = g.OrderByDescending(a => a.Id).Select(a => a.Titre).FirstOrDefault()
-        })
-        .ToListAsync();
+            private readonly EurekaDbContext _db;
 
-    return Results.Ok(result);
-}).AllowAnonymous();
 
-            group.MapGet("/last", async (string cat, EurekaDbContext db) =>
+            public ActualitesController(EurekaDbContext db)
             {
-                  var lastActu = await db.Set<Actualite>()
-                  .Where(a => a.Categorie == cat)
-                  .OrderByDescending(a => a.Id)
-                  .Select(a => new ActualiteReadDto(a.Id, a.Titre, a.Categorie, a.DescriptionCourte, a.Contenu))
-                  .FirstOrDefaultAsync();
+                _db = db;
+            }
 
-                  return lastActu is not null ? Results.Ok(lastActu) : Results.NotFound();
-            }).AllowAnonymous();
-
-        group.MapGet("/image/{id}", async (int id, EurekaDbContext db) =>
-        {
-            var image = await db.Set<ActualiteImage>()
-                .Where(img => img.ActualiteId == id)
-                .Select(img => new { img.ImageData, img.ContentType })
-                .FirstOrDefaultAsync();
-
-            return image is not null ? Results.File(image.ImageData, image.ContentType ?? "image/jpeg") : Results.NotFound();
-        }).AllowAnonymous();
-
-        group.MapPost("/", async (HttpContext context, EurekaDbContext db) =>
-        {
-            var form = await context.Request.ReadFormAsync();
-    
-    // test
-    var actualite = new Actualite 
-    {
-        Titre = form["titre"],
-        Categorie = form["categorie"],
-        DescriptionCourte = form["description"],
-        Contenu = form["contenu"]
-    };
-
-    using var transaction = await db.Database.BeginTransactionAsync();
-
-    try
-    {
-        db.Set<Actualite>().Add(actualite);
-        await db.SaveChangesAsync();
-
-        var file = form.Files["Photo"];
-        if (file != null && file.Length > 0)
-        {
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-
-            var actualiteImage = new ActualiteImage 
+            public async Task<IActionResult> GetLastTitlesByCategory()
             {
-                ActualiteId = actualite.Id,
-                ImageData = ms.ToArray(),
-                ContentType = file.ContentType
+                var result = await _db.Set<Actualite>()
+                    .GroupBy(a => a.Categorie)
+                    .Select(g => new 
+                    {
+                        Categorie = g.Key,
+                        DernierTitre = g.OrderByDescending(a => a.Id).Select(a => a.Titre).FirstOrDefault()
+                    })
+                    .ToListAsync();
+
+                return Ok(result);
+            }
+
+
+            [HttpGet("last")]
+                public async Task<IActionResult> GetLastActualite([FromQuery] string cat)
+                {
+                    var lastActu = await _db.Set<Actualite>()
+                        .Where(a => a.Categorie == cat)
+                        .OrderByDescending(a => a.Id)
+                        // Note: Assure-toi que ActualiteReadDto est accessible ici
+                        .Select(a => new ActualiteReadDto(a.Id, a.Titre, a.Categorie, a.DescriptionCourte, a.Contenu))
+                        .FirstOrDefaultAsync();
+
+                    return lastActu is not null ? Ok(lastActu) : NotFound();
+                }
+
+
+            [HttpGet("image/{id}")]
+                public async Task<IActionResult> GetImage(int id)
+                {
+                    var image = await _db.Set<ActualiteImage>()
+                        .Where(img => img.ActualiteId == id)
+                        .Select(img => new { img.ImageData, img.ContentType })
+                        .FirstOrDefaultAsync();
+
+                    if (image == null) return NotFound();
+                    
+                    return File(image.ImageData, image.ContentType ?? "image/jpeg");
+                }
+
+
+       [HttpPost]
+        [Consumes("multipart/form-data")] // Indique qu'on attend un formulaire avec fichier
+        public async Task<IActionResult> CreateActualite([FromForm] ActualiteCreateRequest request, IFormFile? Photo)
+        {
+            // On utilise un DTO ou les paramètres directement pour plus de clarté
+            var actualite = new Actualite 
+            {
+                Titre = request.Titre,
+                Categorie = request.Categorie,
+                DescriptionCourte = request.Description,
+                Contenu = request.Contenu
             };
 
-            db.Set<ActualiteImage>().Add(actualiteImage);
-            await db.SaveChangesAsync();
+            using var transaction = await _db.Database.BeginTransactionAsync();
+
+            try
+            {
+                _db.Set<Actualite>().Add(actualite);
+                await _db.SaveChangesAsync();
+
+                if (Photo != null && Photo.Length > 0)
+                {
+                    using var ms = new MemoryStream();
+                    await Photo.CopyToAsync(ms);
+
+                    var actualiteImage = new ActualiteImage 
+                    {
+                        ActualiteId = actualite.Id,
+                        ImageData = ms.ToArray(),
+                        ContentType = Photo.ContentType
+                    };
+
+                    _db.Set<ActualiteImage>().Add(actualiteImage);
+                    await _db.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                return Ok(new { Message = "Succès", Id = actualite.Id });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return Problem("Erreur lors de l'insertion : " + ex.Message);
+            }
         }
-
-        await transaction.CommitAsync();
-        return Results.Ok(new { Message = "Succès", Id = actualite.Id });
-    }
-    catch (Exception ex)
-    {
-        await transaction.RollbackAsync();
-        return Results.Problem("Erreur lors de l'insertion : " + ex.Message);
-    }
-        }).AllowAnonymous();
-    }
-
-
-
-    
 }
+
+public record ActualiteCreateRequest(string Titre, string Categorie, string Description, string Contenu);

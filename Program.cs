@@ -166,13 +166,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Front", policy =>
         policy.WithOrigins("https://www.eureka-mayotte.fr", "http://127.0.0.1:5500",
-        "https://white-beach-032430610-1.centralus.3.azurestaticapps.net/",
-        "https://white-beach-032430610-1.centralus.3.azurestaticapps.net/",
-        "https://polite-sky-00c4ddd03-1.westeurope.6.azurestaticapps.net/",
-        "https://thankful-smoke-064996a10-1.centralus.3.azurestaticapps.net/",
-        "https://lively-coast-088a84303-1.westeurope.6.azurestaticapps.net/",
-        "https://blue-sand-0dff67f03-1.westeurope.1.azurestaticapps.net/",
-        "https://alomaycode.github.io/alomaytri-front/")
+        "https://white-beach-032430610-1.centralus.3.azurestaticapps.net",
+        "https://white-beach-032430610-1.centralus.3.azurestaticapps.net",
+        "https://polite-sky-00c4ddd03-1.westeurope.6.azurestaticapps.net",
+        "https://thankful-smoke-064996a10-1.centralus.3.azurestaticapps.net",
+        "https://lively-coast-088a84303-1.westeurope.6.azurestaticapps.net",
+        "https://blue-sand-0dff67f03-1.westeurope.1.azurestaticapps.net",
+        "https://alomaycode.github.io/alomaytri-front")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
@@ -221,9 +221,10 @@ using (var scope = app.Services.CreateScope())
     await RoleSeeder.SeedAsync(db);
 }
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.app.UseRouting();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseRouting();
 app.UseCors("Front");
 var supportedCultures = new[] { new CultureInfo("fr-FR") };
 
